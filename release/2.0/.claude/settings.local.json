@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py -3.12 -m pip install edge-tts pygame)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -21,6 +21,7 @@ import nemo_vad
 import time
 from time import sleep
 from halo import Halo
+import tts_manager
 import threading
 import numpy as np
 import torch
@@ -46,6 +47,23 @@ class Translator:
         self.work_path = ARGS.work_path
         self.ctrans = None
         self.file_size = 0
+        
+        # TTS initialization
+        self.tts_enabled = getattr(ARGS, 'tts_enabled', True)
+        self.tts_voice = getattr(ARGS, 'tts_voice', 'ru-RU-DariyaNeural')
+        self.tts_target_lang = getattr(ARGS, 'tts_target_lang', 'rus_Cyrl')
+        self.tts_manager = None
+        
+        if self.tts_enabled:
+            try:
+                self.tts_manager = tts_manager.TTSManager(
+                    voice=self.tts_voice, 
+                    enabled=self.tts_enabled
+                )
+                print(f"TTS initialized for target language: {self.tts_target_lang}")
+            except Exception as e:
+                print(f"TTS initialization failed: {e}")
+                self.tts_enabled = False
 
         self.initialize(ARGS)
 
@@ -78,6 +96,15 @@ class Translator:
                     print(outPut.encode('utf-8', errors='ignore').decode('utf-8'))
                 else:
                     print(outPut.encode('utf-8', errors='ignore').decode('utf-8'))
+                
+                # TTS: Convert translated text to speech
+                if (self.tts_enabled and self.tts_manager and 
+                    target_lang == self.tts_target_lang and 
+                    len(outPut.strip()) > 0):
+                    
+                    # Use async TTS to avoid blocking the main loop
+                    self.tts_manager.speak_async(outPut)
+                    
             except Exception as e:
                 pass
 
@@ -410,6 +437,19 @@ if __name__ == '__main__':
     # Whisper 지원 언어 목록
     file_path = os.path.join(ARGS.exec_path, "whisper_lang_map.json")
     ARGS.lang_map = load_json_file(file_path)
+    
+    # Load TTS settings from config.json
+    config_path = os.path.join(ARGS.exec_path, "config.json")
+    config_data = load_json_file(config_path)
+    if config_data:
+        ARGS.tts_enabled = config_data.get("tts_enabled", False)
+        ARGS.tts_voice = config_data.get("tts_voice", "ru-RU-DariyaNeural")
+        ARGS.tts_target_lang = config_data.get("tts_target_lang", "rus_Cyrl")
+        print(f"TTS config loaded: enabled={ARGS.tts_enabled}, voice={ARGS.tts_voice}, target={ARGS.tts_target_lang}")
+    else:
+        ARGS.tts_enabled = False
+        ARGS.tts_voice = "ru-RU-DariyaNeural"
+        ARGS.tts_target_lang = "rus_Cyrl"
 
     #cuda activate : Translation processing with CPU
     ARGS.cuda_dev = 'cuda' if torch.cuda.is_available() else 'cpu'
