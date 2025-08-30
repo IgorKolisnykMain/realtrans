@@ -3,6 +3,12 @@
 import sys
 import os
 
+# Configure UTF-8 encoding for output streams
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
 # 현재 디렉토리의 절대 경로를 구합니다.
 current_directory = os.path.dirname(os.path.abspath(__file__))
 # lib 폴더의 경로를 구합니다.
@@ -71,7 +77,7 @@ class Translator:
                 if self.isDecoding:
                     print(outPut.encode('utf-8', errors='ignore').decode('utf-8'))
                 else:
-                    print(outPut.encode('utf-8', errors='ignore'))
+                    print(outPut.encode('utf-8', errors='ignore').decode('utf-8'))
             except Exception as e:
                 pass
 
@@ -333,7 +339,7 @@ def main(ARGS):
                             if ARGS.isDecoding==True:
                                 print(outText.encode('utf-8', errors='ignore').decode('utf-8'))
                             else :
-                                print(outText.encode('utf-8', errors='ignore'))
+                                print(outText.encode('utf-8', errors='ignore').decode('utf-8'))
                         except Exception as e:
                             pass  # 에러가 발생해도 아무런 행동을 취하지 않음
 
